@@ -9,7 +9,8 @@ public enum GridType
 
 public enum RenderType
 {
-	Texture = 0,
+	None = 0,
+	Texture,
 	Instances,
 }
 
@@ -32,7 +33,7 @@ public class GridAuthoring : MonoBehaviour
 			{
 				AddComponent(entity, new ArrayGridInitComponent());
 			}
-			else
+			else if (authoring.GridType == GridType.Entities)
 			{
 				AddComponent(entity, new EntityGridComponent());
 			}
@@ -41,7 +42,7 @@ public class GridAuthoring : MonoBehaviour
 			{
 				AddComponent(entity, new TextureRendererComponent());
 			}
-			else
+			else if (authoring.RenderType == RenderType.Instances)
 			{
 				AddComponent(entity, new InstanceRendererComponent());
 			}

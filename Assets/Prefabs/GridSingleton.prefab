@@ -47,7 +47,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   GridType: 0
-  RenderType: 1
+  RenderType: 2
   Grid:
     Width: 256
     Height: 128
