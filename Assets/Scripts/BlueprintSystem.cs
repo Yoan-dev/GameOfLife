@@ -2,9 +2,7 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
-using UnityEditor.PackageManager;
 using UnityEngine;
-using static UnityEngine.EventSystems.EventTrigger;
 
 public struct BlueprintData
 {
