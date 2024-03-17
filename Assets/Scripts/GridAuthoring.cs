@@ -31,7 +31,6 @@ public class GridAuthoring : MonoBehaviour
 			Entity entity = GetEntity(TransformUsageFlags.Dynamic);
 
 			AddComponent(entity, in authoring.Grid);
-			AddComponent(entity, new ArrayGridInitComponent());
 
 			if (authoring.RenderType == RenderType.Texture)
 			{

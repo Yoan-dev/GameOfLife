@@ -33,7 +33,7 @@ public partial struct BlueprintEventBufferElement : IBufferElementData
 	public int2 Coordinates;
 }
 
-[UpdateAfter(typeof(ArrayGridSystem))]
+[UpdateAfter(typeof(GridSystem))]
 public partial struct BlueprintSystem : ISystem
 {
     [BurstCompile]

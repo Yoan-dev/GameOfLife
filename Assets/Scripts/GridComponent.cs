@@ -22,11 +22,7 @@ public partial struct GridComponent : IComponentData
 	}
 }
 
-public partial struct ArrayGridInitComponent : IComponentData
-{
-}
-
-public partial struct ArrayGridComponent : IComponentData
+public partial struct CellArrayComponent : IComponentData
 {
 	public NativeArray<int> Cells;
 	public NativeArray<int> Copy;
@@ -35,8 +31,4 @@ public partial struct ArrayGridComponent : IComponentData
 public partial struct ColorArrayComponent : IComponentData
 {
 	public NativeArray<float4> Colors;
-}
-
-public partial struct InstanceRendererComponent : IComponentData
-{
 }

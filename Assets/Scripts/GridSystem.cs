@@ -3,9 +3,8 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
-using static BlueprintSystem;
 
-public partial struct ArrayGridInitSystem : ISystem
+public partial struct GridInitSystem : ISystem
 {
 	private NativeArray<int> _cells;
 	private NativeArray<int> _copy;
@@ -15,7 +14,6 @@ public partial struct ArrayGridInitSystem : ISystem
 	public void OnCreate(ref SystemState state)
 	{
 		state.RequireForUpdate<GridComponent>();
-		state.RequireForUpdate<ArrayGridInitComponent>();
 	}
 
 	[BurstCompile]
@@ -40,7 +38,7 @@ public partial struct ArrayGridInitSystem : ISystem
 		_copy = new NativeArray<int>(length, Allocator.Persistent);
 		_colors = new NativeArray<float4>(length, Allocator.Persistent);
 
-		state.EntityManager.AddComponentData(gridEntity, new ArrayGridComponent
+		state.EntityManager.AddComponentData(gridEntity, new CellArrayComponent
 		{
 			Cells = _cells,
 			Copy = _copy,
@@ -49,13 +47,13 @@ public partial struct ArrayGridInitSystem : ISystem
 		{
 			Colors = _colors,
 		});
-		state.EntityManager.RemoveComponent<ArrayGridInitComponent>(gridEntity);
+		
 		state.Enabled = false;
 	}
 }
 
-[UpdateAfter(typeof(ArrayGridInitSystem))]
-public partial struct ArrayGridSystem : ISystem
+[UpdateAfter(typeof(GridInitSystem))]
+public partial struct GridSystem : ISystem
 {
 	private const int ForBatchCount = 32;
 	private const float UpdateTick = 0.1f;
@@ -66,7 +64,7 @@ public partial struct ArrayGridSystem : ISystem
 	public void OnCreate(ref SystemState state)
 	{
 		state.RequireForUpdate<GridComponent>();
-		state.RequireForUpdate<ArrayGridComponent>();
+		state.RequireForUpdate<CellArrayComponent>();
 		state.RequireForUpdate<BlueprintCollectionRef>();
 	}
 
@@ -79,32 +77,33 @@ public partial struct ArrayGridSystem : ISystem
 		{
 			_time -= UpdateTick;
 
-			// get as RW to force job dependency
-			ArrayGridComponent arrayGrid = SystemAPI.GetSingletonRW<ArrayGridComponent>().ValueRW;
-			ColorArrayComponent colorArray = SystemAPI.GetSingletonRW<ColorArrayComponent>().ValueRW;
-
-			GridComponent grid = SystemAPI.GetSingleton<GridComponent>();
+			Entity entity = SystemAPI.GetSingletonEntity<GridComponent>();
+			GridComponent grid = SystemAPI.GetComponent<GridComponent>(entity);
 			int length = grid.Width * grid.Height;
+
+			// get as RW to force job dependency
+			CellArrayComponent cellArray = SystemAPI.GetComponentRW<CellArrayComponent>(entity).ValueRW;
+			ColorArrayComponent colorArray = SystemAPI.GetComponentRW<ColorArrayComponent>(entity).ValueRW;
 
 			state.Dependency = new GridUpdateJob
 			{
-				Read = arrayGrid.Copy,
-				Write = arrayGrid.Cells,
+				Read = cellArray.Copy,
+				Write = cellArray.Cells,
 				Colors = colorArray.Colors,
 				Grid = grid,
 			}.ScheduleParallel(length, ForBatchCount, state.Dependency);
 
 			state.Dependency = new BlueprintJob
 			{
-				Write = arrayGrid.Cells,
+				Write = cellArray.Cells,
 				BlueprintCollection = SystemAPI.GetSingleton<BlueprintCollectionRef>(),
 				Grid = grid,
 			}.Schedule(state.Dependency);
 
 			state.Dependency = new CopyJob
 			{
-				Read = arrayGrid.Cells,
-				Write = arrayGrid.Copy,
+				Read = cellArray.Cells,
+				Write = cellArray.Copy,
 			}.ScheduleParallel(length, ForBatchCount, state.Dependency);
 		}
 	}
@@ -148,20 +147,6 @@ public partial struct ArrayGridSystem : ISystem
 	}
 
 	[BurstCompile]
-	public partial struct CopyJob : IJobFor
-	{
-		[ReadOnly]
-		public NativeArray<int> Read;
-		[WriteOnly]
-		public NativeArray<int> Write;
-
-		public void Execute(int index)
-		{
-			Write[index] = Read[index];
-		}
-	}
-
-	[BurstCompile]
 	public partial struct BlueprintJob : IJobEntity
 	{
 		[WriteOnly]
@@ -182,6 +167,20 @@ public partial struct ArrayGridSystem : ISystem
 				}
 			}
 			blueprintEvents.Clear();
+		}
+	}
+
+	[BurstCompile]
+	public partial struct CopyJob : IJobFor
+	{
+		[ReadOnly]
+		public NativeArray<int> Read;
+		[WriteOnly]
+		public NativeArray<int> Write;
+
+		public void Execute(int index)
+		{
+			Write[index] = Read[index];
 		}
 	}
 }
