@@ -9,8 +9,7 @@ public partial struct InstanceRendererComponent : IComponentData
 }
 
 [BurstCompile]
-[UpdateAfter(typeof(ArrayGridSystem))]
-[UpdateAfter(typeof(EntityGridSystem))]
+[UpdateAfter(typeof(BlueprintSystem))]
 public partial class InstanceRendererSystem : SystemBase
 {
 	private const int RenderBatchSize = 454;
@@ -82,19 +81,6 @@ public partial class InstanceRendererSystem : SystemBase
 		{
 			_materialPropertyBlock.SetInteger("_InstanceIDOffset", i);
 			Graphics.RenderMeshInstanced(_renderParams, _mesh, 0, _matrices, math.min(_matrices.Length - i, RenderBatchSize), i);
-		}
-	}
-
-	[BurstCompile]
-	public partial struct GetColorsJob : IJobEntity
-	{
-		[NativeDisableParallelForRestriction]
-		[WriteOnly]
-		public NativeArray<float4> Colors;
-
-		public void Execute(in CellComponent cell)
-		{
-			Colors[cell.Index] = new float4(cell.State);
 		}
 	}
 }

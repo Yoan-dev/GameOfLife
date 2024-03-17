@@ -46,11 +46,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a2a6b27bb0ea464ba21f6d30bdb4d11, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GridType: 0
+  GridType: 1
   RenderType: 2
   Grid:
     Width: 256
     Height: 128
+  Blueprints:
+  - Cells:
+    - x: 1
+      y: 0
+    - x: 2
+      y: 0
+    - x: 0
+      y: 1
+    - x: 2
+      y: 1
+    - x: 2
+      y: 2
 --- !u!33 &3817996860607997934
 MeshFilter:
   m_ObjectHideFlags: 0

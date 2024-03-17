@@ -8,6 +8,18 @@ public partial struct GridComponent : IComponentData
 {
 	public int Width;
 	public int Height;
+
+	public int Index(int2 coordinates)
+	{
+		return coordinates.x + coordinates.y * Width;
+	}
+
+	public int2 AdjustCoordinates(int2 coordinates)
+	{
+		return new int2(
+			(coordinates.x + Width) % Width,
+			(coordinates.y + Height) % Height);
+	}
 }
 
 public partial struct ArrayGridInitComponent : IComponentData

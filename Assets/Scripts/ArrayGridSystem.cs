@@ -3,6 +3,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
+using static BlueprintSystem;
 
 public partial struct ArrayGridInitSystem : ISystem
 {
@@ -39,17 +40,6 @@ public partial struct ArrayGridInitSystem : ISystem
 		_copy = new NativeArray<int>(length, Allocator.Persistent);
 		_colors = new NativeArray<float4>(length, Allocator.Persistent);
 
-		_cells[1] = 1;
-		_cells[2] = 1;
-		_cells[grid.Width] = 1;
-		_cells[grid.Width + 2] = 1;
-		_cells[grid.Width * 2 + 2] = 1;
-		_copy[1] = 1;
-		_copy[2] = 1;
-		_copy[grid.Width] = 1;
-		_copy[grid.Width + 2] = 1;
-		_copy[grid.Width * 2 + 2] = 1;
-
 		state.EntityManager.AddComponentData(gridEntity, new ArrayGridComponent
 		{
 			Cells = _cells,
@@ -75,7 +65,9 @@ public partial struct ArrayGridSystem : ISystem
 	[BurstCompile]
 	public void OnCreate(ref SystemState state)
 	{
+		state.RequireForUpdate<GridComponent>();
 		state.RequireForUpdate<ArrayGridComponent>();
+		state.RequireForUpdate<BlueprintCollectionRef>();
 	}
 
 	[BurstCompile]
@@ -101,6 +93,13 @@ public partial struct ArrayGridSystem : ISystem
 				Colors = colorArray.Colors,
 				Grid = grid,
 			}.ScheduleParallel(length, ForBatchCount, state.Dependency);
+
+			state.Dependency = new BlueprintJob
+			{
+				Write = arrayGrid.Cells,
+				BlueprintCollection = SystemAPI.GetSingleton<BlueprintCollectionRef>(),
+				Grid = grid,
+			}.Schedule(state.Dependency);
 
 			state.Dependency = new CopyJob
 			{
@@ -159,6 +158,30 @@ public partial struct ArrayGridSystem : ISystem
 		public void Execute(int index)
 		{
 			Write[index] = Read[index];
+		}
+	}
+
+	[BurstCompile]
+	public partial struct BlueprintJob : IJobEntity
+	{
+		[WriteOnly]
+		public NativeArray<int> Write;
+		public BlueprintCollectionRef BlueprintCollection;
+		public GridComponent Grid;
+
+		public void Execute(ref DynamicBuffer<BlueprintEventBufferElement> blueprintEvents)
+		{
+			foreach (var blueprintEvent in blueprintEvents)
+			{
+				ref BlueprintData blueprint = ref BlueprintCollection.Collection.Value.Blueprints[blueprintEvent.BlueprintId];
+				for (int i = 0; i < blueprint.Cells.Length; i++)
+				{
+					int2 coordinates = Grid.AdjustCoordinates(blueprint.Cells[i] + blueprintEvent.Coordinates);
+					int index = Grid.Index(coordinates);
+					Write[coordinates.x + coordinates.y * Grid.Width] = 1;
+				}
+			}
+			blueprintEvents.Clear();
 		}
 	}
 }
