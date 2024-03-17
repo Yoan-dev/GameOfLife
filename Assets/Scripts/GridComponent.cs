@@ -8,6 +8,8 @@ public partial struct GridComponent : IComponentData
 {
 	public int Width;
 	public int Height;
+	public float2 MinBounds;
+	public float2 MaxBounds;
 
 	public int Index(int2 coordinates)
 	{

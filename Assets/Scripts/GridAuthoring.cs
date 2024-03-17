@@ -21,7 +21,9 @@ public struct BlueprintManagedData
 public class GridAuthoring : MonoBehaviour
 {
 	public RenderType RenderType;
-	public GridComponent Grid;
+	public int Width;
+	public int Height;
+	public float CellSpacing;
 	public BlueprintManagedData[] Blueprints = new BlueprintManagedData[0];
 
 	public class Baker : Baker<GridAuthoring>
@@ -30,7 +32,15 @@ public class GridAuthoring : MonoBehaviour
 		{
 			Entity entity = GetEntity(TransformUsageFlags.Dynamic);
 
-			AddComponent(entity, in authoring.Grid);
+			float spacing = 1f + (authoring.RenderType == RenderType.Texture ? 0f : authoring.CellSpacing);
+
+			AddComponent(entity, new GridComponent
+			{
+				Width = authoring.Width,
+				Height = authoring.Height,
+				MaxBounds = new float2(authoring.Width * spacing / 2f, authoring.Height * spacing / 2f),
+				MinBounds = new float2(-authoring.Width * spacing / 2f, -authoring.Height * spacing / 2f),
+			});
 
 			if (authoring.RenderType == RenderType.Texture)
 			{
@@ -38,7 +48,7 @@ public class GridAuthoring : MonoBehaviour
 			}
 			else if (authoring.RenderType == RenderType.Instances)
 			{
-				AddComponent(entity, new InstanceRendererComponent());
+				AddComponent(entity, new InstanceRendererComponent { CellSpacing = authoring.CellSpacing });
 			}
 
 			var builder = new BlobBuilder(Allocator.Temp);

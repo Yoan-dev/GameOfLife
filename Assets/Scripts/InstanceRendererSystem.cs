@@ -6,6 +6,7 @@ using UnityEngine;
 
 public partial struct InstanceRendererComponent : IComponentData
 {
+	public float CellSpacing;
 }
 
 [BurstCompile]
@@ -13,7 +14,6 @@ public partial struct InstanceRendererComponent : IComponentData
 public partial class InstanceRendererSystem : SystemBase
 {
 	private const int RenderBatchSize = 454;
-	private const float CellSpacing = 1.1f;
 
 	private NativeArray<Matrix4x4> _matrices;
 	private Mesh _mesh;
@@ -51,14 +51,15 @@ public partial class InstanceRendererSystem : SystemBase
 			int length = grid.Width * grid.Height;
 			_matrices = new NativeArray<Matrix4x4>(length, Allocator.Persistent);
 
-			float xOffset = grid.Width * CellSpacing / 2f;
-			float yOffset = grid.Height * CellSpacing / 2f;
+			float spacing = 1f + SystemAPI.GetSingleton<InstanceRendererComponent>().CellSpacing;
+			float xOffset = grid.Width * spacing / 2f;
+			float yOffset = grid.Height * spacing / 2f;
 
 			for (int i = 0; i < length; i++)
 			{
 				int x = i % grid.Width;
 				int y = i / grid.Width;
-				_matrices[i] = Matrix4x4.TRS(new Vector3(x * CellSpacing - xOffset, y * CellSpacing - yOffset, 0f), quaternion.identity, Vector3.one);
+				_matrices[i] = Matrix4x4.TRS(new Vector3(x * spacing - xOffset, y * spacing - yOffset, 0f), quaternion.identity, Vector3.one);
 			}
 
 			_mesh = MonoInstance.Instance.QuadMesh;
