@@ -1,0 +1,257 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &414798906258123461
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3763049475161443891}
+  - component: {fileID: 8049517294783038501}
+  m_Layer: 0
+  m_Name: ManagedData
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3763049475161443891
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 414798906258123461}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8049517294783038501
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 414798906258123461}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73f8fa4682727bf4ea1030da015c499b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  QuadMesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+  InstanceMaterial: {fileID: 2100000, guid: 64444ed66eb10104a9a3f8b854a2b6c4, type: 2}
+  GridShader: {fileID: -6465566751694194690, guid: a920c7c80cd581e4ba2c2c3fdf4a954e,
+    type: 3}
+  Blueprints:
+  - Name: none
+    Cells: []
+  - Name: Glider
+    Cells:
+    - x: 1
+      y: 0
+    - x: 2
+      y: 0
+    - x: 0
+      y: 1
+    - x: 2
+      y: 1
+    - x: 2
+      y: 2
+  - Name: Light-weight spaceship
+    Cells:
+    - x: 1
+      y: 0
+    - x: 2
+      y: 0
+    - x: 3
+      y: 0
+    - x: 4
+      y: 0
+    - x: 0
+      y: 1
+    - x: 4
+      y: 1
+    - x: 4
+      y: 2
+    - x: 0
+      y: 3
+    - x: 3
+      y: 3
+  - Name: Pulsar
+    Cells:
+    - x: 2
+      y: 0
+    - x: 3
+      y: 0
+    - x: 4
+      y: 0
+    - x: 8
+      y: 0
+    - x: 9
+      y: 0
+    - x: 10
+      y: 0
+    - x: 0
+      y: 2
+    - x: 5
+      y: 2
+    - x: 7
+      y: 2
+    - x: 12
+      y: 2
+    - x: 0
+      y: 3
+    - x: 5
+      y: 3
+    - x: 7
+      y: 3
+    - x: 12
+      y: 3
+    - x: 0
+      y: 4
+    - x: 5
+      y: 4
+    - x: 7
+      y: 4
+    - x: 12
+      y: 4
+    - x: 2
+      y: 5
+    - x: 3
+      y: 5
+    - x: 4
+      y: 5
+    - x: 8
+      y: 5
+    - x: 9
+      y: 5
+    - x: 10
+      y: 5
+    - x: 2
+      y: 7
+    - x: 3
+      y: 7
+    - x: 4
+      y: 7
+    - x: 8
+      y: 7
+    - x: 9
+      y: 7
+    - x: 10
+      y: 7
+    - x: 0
+      y: 8
+    - x: 5
+      y: 8
+    - x: 7
+      y: 8
+    - x: 12
+      y: 8
+    - x: 0
+      y: 9
+    - x: 5
+      y: 9
+    - x: 7
+      y: 9
+    - x: 12
+      y: 9
+    - x: 0
+      y: 10
+    - x: 5
+      y: 10
+    - x: 7
+      y: 10
+    - x: 12
+      y: 10
+    - x: 2
+      y: 12
+    - x: 3
+      y: 12
+    - x: 4
+      y: 12
+    - x: 8
+      y: 12
+    - x: 9
+      y: 12
+    - x: 10
+      y: 12
+  - Name: Glider Gun
+    Cells:
+    - x: 12
+      y: 0
+    - x: 13
+      y: 0
+    - x: 11
+      y: 1
+    - x: 15
+      y: 1
+    - x: 10
+      y: 2
+    - x: 16
+      y: 2
+    - x: 24
+      y: 2
+    - x: 0
+      y: 3
+    - x: 1
+      y: 3
+    - x: 10
+      y: 3
+    - x: 14
+      y: 3
+    - x: 16
+      y: 3
+    - x: 17
+      y: 3
+    - x: 22
+      y: 3
+    - x: 24
+      y: 3
+    - x: 0
+      y: 4
+    - x: 1
+      y: 4
+    - x: 10
+      y: 4
+    - x: 16
+      y: 4
+    - x: 20
+      y: 4
+    - x: 21
+      y: 4
+    - x: 11
+      y: 5
+    - x: 15
+      y: 5
+    - x: 20
+      y: 5
+    - x: 21
+      y: 5
+    - x: 34
+      y: 5
+    - x: 35
+      y: 5
+    - x: 12
+      y: 6
+    - x: 13
+      y: 6
+    - x: 20
+      y: 6
+    - x: 21
+      y: 6
+    - x: 34
+      y: 6
+    - x: 35
+      y: 6
+    - x: 22
+      y: 7
+    - x: 24
+      y: 7
+    - x: 24
+      y: 8

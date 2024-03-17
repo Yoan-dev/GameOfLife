@@ -11,12 +11,6 @@ public enum RenderType
 	Instances,
 }
 
-[Serializable]
-public struct BlueprintManagedData
-{
-	public int2[] Cells;
-}
-
 [DisallowMultipleComponent]
 public class GridAuthoring : MonoBehaviour
 {
@@ -24,7 +18,6 @@ public class GridAuthoring : MonoBehaviour
 	public int Width;
 	public int Height;
 	public float CellSpacing;
-	public BlueprintManagedData[] Blueprints = new BlueprintManagedData[0];
 
 	public class Baker : Baker<GridAuthoring>
 	{
@@ -50,39 +43,6 @@ public class GridAuthoring : MonoBehaviour
 			{
 				AddComponent(entity, new InstanceRendererComponent { CellSpacing = authoring.CellSpacing });
 			}
-
-			var builder = new BlobBuilder(Allocator.Temp);
-
-			ref BlueprintCollection blueprintCollection = ref builder.ConstructRoot<BlueprintCollection>();
-			
-			int blueprintCount = authoring.Blueprints.Length;
-			BlobBuilderArray<BlueprintData> blueprintArrayBuilder = builder.Allocate(ref blueprintCollection.Blueprints, blueprintCount);
-			for (int i = 0; i < blueprintCount; i++)
-			{
-				BlueprintManagedData blueprintManagedData = authoring.Blueprints[i];
-				blueprintArrayBuilder[i] = new BlueprintData();
-
-				int cellsCount = blueprintManagedData.Cells.Length;
-				BlobBuilderArray<int2> cellArrayBuilder = builder.Allocate(ref blueprintArrayBuilder[i].Cells, cellsCount);
-				for (int j = 0; j < cellsCount; j++)
-				{
-					cellArrayBuilder[j] = blueprintManagedData.Cells[j];
-				}
-			}
-
-			var blueprintCollectionReference = builder.CreateBlobAssetReference<BlueprintCollection>(Allocator.Persistent);
-			AddBlobAsset(ref blueprintCollectionReference, out var hash);
-			builder.Dispose();
-
-			AddComponent(entity, new BlueprintCollectionRef
-			{
-				Collection = blueprintCollectionReference,
-			});
-			AddComponent(entity, new BlueprintComponent
-			{
-				BlueprintId = 0,
-			});
-			AddBuffer<BlueprintEventBufferElement>(entity);
 		}
 	}
 }

@@ -158,10 +158,25 @@ public partial struct GridSystem : ISystem
 		{
 			foreach (var blueprintEvent in blueprintEvents)
 			{
-				ref BlueprintData blueprint = ref BlueprintCollection.Collection.Value.Blueprints[blueprintEvent.BlueprintId];
+				ref BlueprintData blueprint = ref BlueprintCollection.Collection.Value.Blueprints[blueprintEvent.BlueprintIndex];
 				for (int i = 0; i < blueprint.Cells.Length; i++)
 				{
-					int2 coordinates = Grid.AdjustCoordinates(blueprint.Cells[i] + blueprintEvent.Coordinates);
+					int2 cellCoordinates = blueprint.Cells[i];
+
+					if (blueprintEvent.Orientation == 90)
+					{
+						cellCoordinates = new int2(-cellCoordinates.x, cellCoordinates.y);
+					}
+					else if (blueprintEvent.Orientation == 180)
+					{
+						cellCoordinates = new int2(-cellCoordinates.x, -cellCoordinates.y);
+					}
+					else if (blueprintEvent.Orientation == 270)
+					{
+						cellCoordinates = new int2(cellCoordinates.x, -cellCoordinates.y);
+					}
+
+					int2 coordinates = Grid.AdjustCoordinates(cellCoordinates + blueprintEvent.Coordinates);
 					int index = Grid.Index(coordinates);
 					Write[coordinates.x + coordinates.y * Grid.Width] = 1;
 				}

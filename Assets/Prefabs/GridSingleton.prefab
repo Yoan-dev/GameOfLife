@@ -49,9 +49,12 @@ MonoBehaviour:
   RenderType: 2
   Width: 256
   Height: 128
-  CellSpacing: 0.1
+  CellSpacing: 0
   Blueprints:
-  - Cells:
+  - Name: none
+    Cells: []
+  - Name: Glider
+    Cells:
     - x: 1
       y: 0
     - x: 2

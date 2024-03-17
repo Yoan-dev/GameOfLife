@@ -2,7 +2,9 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
+using UnityEditor.PackageManager;
 using UnityEngine;
+using static UnityEngine.EventSystems.EventTrigger;
 
 public struct BlueprintData
 {
@@ -21,29 +23,81 @@ public struct BlueprintCollectionRef : IComponentData
 
 public partial struct BlueprintComponent : IComponentData
 {
-	public int BlueprintId;
+	public int BlueprintIndex;
 	public int Orientation;
 }
 
 [InternalBufferCapacity(0)]
 public partial struct BlueprintEventBufferElement : IBufferElementData
 {
-	public int BlueprintId;
+	public int BlueprintIndex;
 	public int Orientation;
 	public int2 Coordinates;
 }
 
 [UpdateAfter(typeof(GridSystem))]
-public partial struct BlueprintSystem : ISystem
+public partial struct BlueprintSystem : ISystem, ISystemStartStop
 {
-    [BurstCompile]
+	private BlobAssetReference<BlueprintCollectionRef> _blueprintCollectionRef;
+
+	[BurstCompile]
 	public void OnCreate(ref SystemState state)
 	{
-		state.RequireForUpdate<BlueprintComponent>();
-		state.RequireForUpdate<BlueprintCollectionRef>();
+		state.RequireForUpdate<GridComponent>();
 		state.RequireForUpdate<ColorArrayComponent>();
 	}
-	
+
+	[BurstCompile]
+	public void OnDestroy(ref SystemState state)
+	{
+		if (_blueprintCollectionRef.IsCreated)
+		{
+			_blueprintCollectionRef.Dispose();
+		}
+	}
+
+	[BurstCompile]
+	public void OnStartRunning(ref SystemState state)
+	{
+		var builder = new BlobBuilder(Allocator.Temp);
+
+		ref BlueprintCollection blueprintCollection = ref builder.ConstructRoot<BlueprintCollection>();
+
+		int blueprintCount = ManagedData.Instance.Blueprints.Length;
+		BlobBuilderArray<BlueprintData> blueprintArrayBuilder = builder.Allocate(ref blueprintCollection.Blueprints, blueprintCount);
+		for (int i = 0; i < blueprintCount; i++)
+		{
+			ManagedBlueprintData blueprintManagedData = ManagedData.Instance.Blueprints[i];
+			blueprintArrayBuilder[i] = new BlueprintData();
+
+			int cellsCount = blueprintManagedData.Cells.Length;
+			BlobBuilderArray<int2> cellArrayBuilder = builder.Allocate(ref blueprintArrayBuilder[i].Cells, cellsCount);
+			for (int j = 0; j < cellsCount; j++)
+			{
+				cellArrayBuilder[j] = blueprintManagedData.Cells[j];
+			}
+		}
+
+		var blueprintCollectionReference = builder.CreateBlobAssetReference<BlueprintCollection>(Allocator.Persistent);
+		builder.Dispose();
+
+		Entity entity = SystemAPI.GetSingletonEntity<GridComponent>();
+		state.EntityManager.AddComponentData(entity, new BlueprintCollectionRef
+		{
+			Collection = blueprintCollectionReference,
+		});
+		state.EntityManager.AddComponentData(entity, new BlueprintComponent
+		{
+			BlueprintIndex = 0,
+		});
+		state.EntityManager.AddBuffer<BlueprintEventBufferElement>(entity);
+	}
+
+	[BurstCompile]
+	public void OnStopRunning(ref SystemState state)
+	{
+	}
+
 	[BurstCompile]
     public void OnUpdate(ref SystemState state)
 	{
@@ -54,11 +108,21 @@ public partial struct BlueprintSystem : ISystem
 			(int)((worldMousePos.x - grid.MinBounds.x) / (grid.MaxBounds.x - grid.MinBounds.x) * grid.Width),
 			(int)((worldMousePos.y - grid.MinBounds.y) / (grid.MaxBounds.y - grid.MinBounds.y) * grid.Height));
 
+		state.Dependency = new UpdateBlueprintJob
+		{
+			Index = ManagedUI.Instance.GetBlueprintIndex(),
+		}.Schedule(state.Dependency);
+
 		if (mouseCoordinates.x >= 0 &&
 			mouseCoordinates.y >= 0 &&
 			mouseCoordinates.x < grid.Width &&
 			mouseCoordinates.y < grid.Height)
 		{
+			if (Input.GetMouseButtonDown(1))
+			{
+				state.Dependency = new IncrementOrientationJob().Schedule(state.Dependency);
+			}
+			
 			// get as RW to force job dependency
 			ColorArrayComponent colorArray = SystemAPI.GetSingletonRW<ColorArrayComponent>().ValueRW;
 
@@ -81,6 +145,26 @@ public partial struct BlueprintSystem : ISystem
 	}
 
 	[BurstCompile]
+	public partial struct UpdateBlueprintJob : IJobEntity
+	{
+		public int Index;
+
+		public void Execute(ref BlueprintComponent blueprintComponent)
+		{
+			blueprintComponent.BlueprintIndex = Index;
+		}
+	}
+
+	[BurstCompile]
+	public partial struct IncrementOrientationJob : IJobEntity
+	{
+		public void Execute(ref BlueprintComponent blueprintComponent)
+		{
+			blueprintComponent.Orientation = (blueprintComponent.Orientation + 90) % 360;
+		}
+	}
+
+	[BurstCompile]
 	public partial struct BlueprintPreviewJob : IJobEntity
 	{
 		[NativeDisableParallelForRestriction]
@@ -92,14 +176,27 @@ public partial struct BlueprintSystem : ISystem
 
 		public void Execute(in BlueprintComponent blueprintComponent)
 		{
-			if (blueprintComponent.BlueprintId != -1)
+			if (blueprintComponent.BlueprintIndex != -1)
 			{
-				// TODO: rotation
-
-				ref BlueprintData blueprint = ref BlueprintCollection.Collection.Value.Blueprints[blueprintComponent.BlueprintId];
+				ref BlueprintData blueprint = ref BlueprintCollection.Collection.Value.Blueprints[blueprintComponent.BlueprintIndex];
 				for (int i = 0; i < blueprint.Cells.Length; i++)
 				{
-					int2 coordinates = Grid.AdjustCoordinates(blueprint.Cells[i] + Coordinates);
+					int2 cellCoordinates = blueprint.Cells[i];
+
+					if (blueprintComponent.Orientation == 90)
+					{
+						cellCoordinates = new int2(-cellCoordinates.x, cellCoordinates.y);
+					}
+					else if (blueprintComponent.Orientation == 180)
+					{
+						cellCoordinates = new int2(-cellCoordinates.x, -cellCoordinates.y);
+					}
+					else if (blueprintComponent.Orientation == 270)
+					{
+						cellCoordinates = new int2(cellCoordinates.x, -cellCoordinates.y);
+					}
+
+					int2 coordinates = Grid.AdjustCoordinates(cellCoordinates + Coordinates);
 					int index = Grid.Index(coordinates);
 					Colors[index] = new float4(1f, 0f, 0f, 1f);
 				}
@@ -114,11 +211,11 @@ public partial struct BlueprintSystem : ISystem
 
 		public void Execute(in BlueprintComponent blueprintComponent, ref DynamicBuffer<BlueprintEventBufferElement> blueprintEvents)
 		{
-			if (blueprintComponent.BlueprintId != -1)
+			if (blueprintComponent.BlueprintIndex != -1)
 			{
 				blueprintEvents.Add(new BlueprintEventBufferElement
 				{
-					BlueprintId = blueprintComponent.BlueprintId,
+					BlueprintIndex = blueprintComponent.BlueprintIndex,
 					Orientation = blueprintComponent.Orientation,
 					Coordinates = Coordinates,
 				});

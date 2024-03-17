@@ -36,13 +36,13 @@ public partial class TextureRendererSystem : SystemBase
 			_gridTexture = new Texture2D(grid.Width, grid.Height);
 			_gridTexture.filterMode = FilterMode.Point;
 
-			Material gridMaterial = new Material(MonoInstance.Instance.GridShader);
+			Material gridMaterial = new Material(ManagedData.Instance.GridShader);
 			gridMaterial.SetTexture("_Grid", _gridTexture);
 
 			EntitiesGraphicsSystem entitiesGraphics = World.GetExistingSystemManaged<EntitiesGraphicsSystem>();
 			EntityManager.SetComponentData(entity, new MaterialMeshInfo
 			{
-				MeshID = entitiesGraphics.RegisterMesh(MonoInstance.Instance.QuadMesh),
+				MeshID = entitiesGraphics.RegisterMesh(ManagedData.Instance.QuadMesh),
 				MaterialID = entitiesGraphics.RegisterMaterial(gridMaterial),
 			});
 			EntityManager.SetComponentData(entity, new LocalToWorld

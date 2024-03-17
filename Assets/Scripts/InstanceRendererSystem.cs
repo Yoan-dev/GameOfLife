@@ -62,8 +62,8 @@ public partial class InstanceRendererSystem : SystemBase
 				_matrices[i] = Matrix4x4.TRS(new Vector3(x * spacing - xOffset, y * spacing - yOffset, 0f), quaternion.identity, Vector3.one);
 			}
 
-			_mesh = MonoInstance.Instance.QuadMesh;
-			_material = MonoInstance.Instance.InstanceMaterial;
+			_mesh = ManagedData.Instance.QuadMesh;
+			_material = ManagedData.Instance.InstanceMaterial;
 			_buffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, length, sizeof(float) * 4);
 			_materialPropertyBlock = new MaterialPropertyBlock();
 			_renderParams = new RenderParams(_material) { matProps = _materialPropertyBlock };
