@@ -43,6 +43,7 @@ public partial struct BlueprintComponent : IComponentData
 {
 	public int BlueprintIndex;
 	public int Orientation;
+	public int2 Coordinates;
 }
 
 [InternalBufferCapacity(0)]
@@ -129,6 +130,8 @@ public partial struct BlueprintSystem : ISystem, ISystemStartStop
 		state.Dependency = new UpdateBlueprintJob
 		{
 			Index = ManagedUI.Instance.GetBlueprintIndex(),
+			PressedRotateInput = Input.GetMouseButtonDown(1),
+			Coordinates = mouseCoordinates,
 		}.Schedule(state.Dependency);
 
 		if (mouseCoordinates.x >= 0 &&
@@ -136,11 +139,6 @@ public partial struct BlueprintSystem : ISystem, ISystemStartStop
 			mouseCoordinates.x < grid.Width &&
 			mouseCoordinates.y < grid.Height)
 		{
-			if (Input.GetMouseButtonDown(1))
-			{
-				state.Dependency = new IncrementOrientationJob().Schedule(state.Dependency);
-			}
-			
 			// get as RW to force job dependency
 			ColorArrayComponent colorArray = SystemAPI.GetSingletonRW<ColorArrayComponent>().ValueRW;
 
@@ -148,16 +146,12 @@ public partial struct BlueprintSystem : ISystem, ISystemStartStop
 			{
 				Colors = colorArray.Colors,
 				BlueprintCollection = SystemAPI.GetSingleton<BlueprintCollectionRef>(),
-				Coordinates = mouseCoordinates,
 				Grid = grid,
 			}.Schedule(state.Dependency);
 
 			if (Input.GetMouseButtonDown(0))
 			{
-				state.Dependency = new AddBlueprintEventJob
-				{
-					Coordinates = mouseCoordinates,
-				}.Schedule(state.Dependency);
+				state.Dependency = new AddBlueprintEventJob().Schedule(state.Dependency);
 			}
 		}
 	}
@@ -166,19 +160,18 @@ public partial struct BlueprintSystem : ISystem, ISystemStartStop
 	public partial struct UpdateBlueprintJob : IJobEntity
 	{
 		public int Index;
+		public bool PressedRotateInput;
+		public int2 Coordinates;
 
 		public void Execute(ref BlueprintComponent blueprintComponent)
 		{
 			blueprintComponent.BlueprintIndex = Index;
-		}
-	}
+			blueprintComponent.Coordinates = Coordinates;
 
-	[BurstCompile]
-	public partial struct IncrementOrientationJob : IJobEntity
-	{
-		public void Execute(ref BlueprintComponent blueprintComponent)
-		{
-			blueprintComponent.Orientation = (blueprintComponent.Orientation + 90) % 360;
+			if (PressedRotateInput)
+			{
+				blueprintComponent.Orientation = (blueprintComponent.Orientation + 90) % 360;
+			}
 		}
 	}
 
@@ -190,7 +183,6 @@ public partial struct BlueprintSystem : ISystem, ISystemStartStop
 		public NativeArray<float4> Colors;
 		public BlueprintCollectionRef BlueprintCollection;
 		public GridComponent Grid;
-		public int2 Coordinates;
 
 		public void Execute(in BlueprintComponent blueprintComponent)
 		{
@@ -199,7 +191,7 @@ public partial struct BlueprintSystem : ISystem, ISystemStartStop
 				ref BlueprintData blueprint = ref BlueprintCollection.Collection.Value.Blueprints[blueprintComponent.BlueprintIndex];
 				for (int i = 0; i < blueprint.Cells.Length; i++)
 				{
-					int2 coordinates = Grid.AdjustCoordinates(blueprint.GetCell(i, blueprintComponent.Orientation) + Coordinates);
+					int2 coordinates = Grid.AdjustCoordinates(blueprint.GetCell(i, blueprintComponent.Orientation) + blueprintComponent.Coordinates);
 					int index = Grid.Index(coordinates);
 					Colors[index] = new float4(1f, 0f, 0f, 1f);
 				}
@@ -210,8 +202,6 @@ public partial struct BlueprintSystem : ISystem, ISystemStartStop
 	[BurstCompile]
 	public partial struct AddBlueprintEventJob : IJobEntity
 	{
-		public int2 Coordinates;
-
 		public void Execute(in BlueprintComponent blueprintComponent, ref DynamicBuffer<BlueprintEventBufferElement> blueprintEvents)
 		{
 			if (blueprintComponent.BlueprintIndex != -1)
@@ -220,7 +210,7 @@ public partial struct BlueprintSystem : ISystem, ISystemStartStop
 				{
 					BlueprintIndex = blueprintComponent.BlueprintIndex,
 					Orientation = blueprintComponent.Orientation,
-					Coordinates = Coordinates,
+					Coordinates = blueprintComponent.Coordinates,
 				});
 			}
 		}

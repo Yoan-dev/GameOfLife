@@ -46,25 +46,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a2a6b27bb0ea464ba21f6d30bdb4d11, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  RenderType: 2
+  RenderType: 1
   Width: 256
   Height: 128
-  CellSpacing: 0
-  Blueprints:
-  - Name: none
-    Cells: []
-  - Name: Glider
-    Cells:
-    - x: 1
-      y: 0
-    - x: 2
-      y: 0
-    - x: 0
-      y: 1
-    - x: 2
-      y: 1
-    - x: 2
-      y: 2
+  CellSpacing: 0.1
 --- !u!33 &3817996860607997934
 MeshFilter:
   m_ObjectHideFlags: 0

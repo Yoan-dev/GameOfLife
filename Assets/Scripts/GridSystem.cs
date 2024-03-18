@@ -162,8 +162,7 @@ public partial struct GridSystem : ISystem
 				for (int i = 0; i < blueprint.Cells.Length; i++)
 				{
 					int2 coordinates = Grid.AdjustCoordinates(blueprint.GetCell(i, blueprintEvent.Orientation) + blueprintEvent.Coordinates);
-					int index = Grid.Index(coordinates);
-					Write[coordinates.x + coordinates.y * Grid.Width] = 1;
+					Write[Grid.Index(coordinates)] = 1;
 				}
 			}
 			blueprintEvents.Clear();
