@@ -5,6 +5,7 @@ public class CameraController : MonoBehaviour
     public float Speed = 1f;
     public float ZoomSpeed = 1f;
     public float SpeedMultiplier = 10f;
+	public float MinZoom = 21f;
 
     private void Update()
     {
@@ -27,8 +28,10 @@ public class CameraController : MonoBehaviour
 			velocity.x += 1f;
 		}
 
-		transform.Translate(velocity * (Input.GetKey(KeyCode.LeftShift) ? SpeedMultiplier * Speed : Speed));
+		float speedMultiplier = Input.GetKey(KeyCode.LeftShift) ? SpeedMultiplier : 1;
 
-		Camera.main.orthographicSize -= Input.mouseScrollDelta.y * (Input.GetKey(KeyCode.LeftShift) ? SpeedMultiplier * ZoomSpeed : ZoomSpeed);
+		transform.Translate(velocity * Speed * speedMultiplier);
+
+		Camera.main.orthographicSize = Mathf.Max(MinZoom, Camera.main.orthographicSize - Input.mouseScrollDelta.y * ZoomSpeed * speedMultiplier);
 	}
 }
