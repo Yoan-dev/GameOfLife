@@ -2,9 +2,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ManagedUI : MonoBehaviour
+public class UIManager : MonoBehaviour
 {
-	public static ManagedUI Instance;
+	public static UIManager Instance;
 
 	public Dropdown BlueprintDropdown;
 

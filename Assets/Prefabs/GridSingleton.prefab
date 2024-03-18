@@ -47,9 +47,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   RenderType: 1
-  Width: 256
-  Height: 128
-  CellSpacing: 0.1
+  Width: 512
+  Height: 512
+  CellSpacing: 0
 --- !u!33 &3817996860607997934
 MeshFilter:
   m_ObjectHideFlags: 0

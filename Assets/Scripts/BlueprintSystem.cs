@@ -75,7 +75,7 @@ public partial struct BlueprintSystem : ISystem, ISystemStartStop
 		}
 	}
 
-	[BurstCompile]
+	//[BurstCompile]
 	public void OnStartRunning(ref SystemState state)
 	{
 		var builder = new BlobBuilder(Allocator.Temp);
@@ -135,7 +135,7 @@ public partial struct BlueprintSystem : ISystem, ISystemStartStop
 
 		state.Dependency = new UpdateBlueprintJob
 		{
-			Index = isMouseOnGrid ? ManagedUI.Instance.GetBlueprintIndex() : -1,
+			Index = isMouseOnGrid ? UIManager.Instance.GetBlueprintIndex() : -1,
 			PressedRotateInput = Input.GetMouseButtonDown(1),
 			Coordinates = mouseCoordinates,
 		}.Schedule(state.Dependency);
