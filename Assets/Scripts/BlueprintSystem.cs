@@ -117,7 +117,7 @@ public partial struct BlueprintSystem : ISystem, ISystemStartStop
 	{
 	}
 
-	[BurstCompile]
+	//[BurstCompile]
     public void OnUpdate(ref SystemState state)
 	{
 		GridComponent grid = SystemAPI.GetSingleton<GridComponent>();
@@ -127,32 +127,22 @@ public partial struct BlueprintSystem : ISystem, ISystemStartStop
 			(int)((worldMousePos.x - grid.MinBounds.x) / (grid.MaxBounds.x - grid.MinBounds.x) * grid.Width),
 			(int)((worldMousePos.y - grid.MinBounds.y) / (grid.MaxBounds.y - grid.MinBounds.y) * grid.Height));
 
+		bool isMouseOnGrid =
+			mouseCoordinates.x >= 0 &&
+			mouseCoordinates.y >= 0 &&
+			mouseCoordinates.x < grid.Width &&
+			mouseCoordinates.y < grid.Height;
+
 		state.Dependency = new UpdateBlueprintJob
 		{
-			Index = ManagedUI.Instance.GetBlueprintIndex(),
+			Index = isMouseOnGrid ? ManagedUI.Instance.GetBlueprintIndex() : -1,
 			PressedRotateInput = Input.GetMouseButtonDown(1),
 			Coordinates = mouseCoordinates,
 		}.Schedule(state.Dependency);
 
-		if (mouseCoordinates.x >= 0 &&
-			mouseCoordinates.y >= 0 &&
-			mouseCoordinates.x < grid.Width &&
-			mouseCoordinates.y < grid.Height)
+		if (isMouseOnGrid && Input.GetMouseButtonDown(0))
 		{
-			// get as RW to force job dependency
-			ColorArrayComponent colorArray = SystemAPI.GetSingletonRW<ColorArrayComponent>().ValueRW;
-
-			state.Dependency = new BlueprintPreviewJob
-			{
-				Colors = colorArray.Colors,
-				BlueprintCollection = SystemAPI.GetSingleton<BlueprintCollectionRef>(),
-				Grid = grid,
-			}.Schedule(state.Dependency);
-
-			if (Input.GetMouseButtonDown(0))
-			{
-				state.Dependency = new AddBlueprintEventJob().Schedule(state.Dependency);
-			}
+			state.Dependency = new AddBlueprintEventJob().Schedule(state.Dependency);
 		}
 	}
 
@@ -171,30 +161,6 @@ public partial struct BlueprintSystem : ISystem, ISystemStartStop
 			if (PressedRotateInput)
 			{
 				blueprintComponent.Orientation = (blueprintComponent.Orientation + 90) % 360;
-			}
-		}
-	}
-
-	[BurstCompile]
-	public partial struct BlueprintPreviewJob : IJobEntity
-	{
-		[NativeDisableParallelForRestriction]
-		[WriteOnly]
-		public NativeArray<float4> Colors;
-		public BlueprintCollectionRef BlueprintCollection;
-		public GridComponent Grid;
-
-		public void Execute(in BlueprintComponent blueprintComponent)
-		{
-			if (blueprintComponent.BlueprintIndex != -1)
-			{
-				ref BlueprintData blueprint = ref BlueprintCollection.Collection.Value.Blueprints[blueprintComponent.BlueprintIndex];
-				for (int i = 0; i < blueprint.Cells.Length; i++)
-				{
-					int2 coordinates = Grid.AdjustCoordinates(blueprint.GetCell(i, blueprintComponent.Orientation) + blueprintComponent.Coordinates);
-					int index = Grid.Index(coordinates);
-					Colors[index] = new float4(1f, 0f, 0f, 1f);
-				}
 			}
 		}
 	}

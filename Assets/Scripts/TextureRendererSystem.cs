@@ -10,7 +10,7 @@ public partial struct TextureRendererComponent : IComponentData
 }
 
 [BurstCompile]
-[UpdateAfter(typeof(BlueprintSystem))]
+[UpdateAfter(typeof(ColorSystem))]
 public partial class TextureRendererSystem : SystemBase
 {
 	private Texture2D _gridTexture;

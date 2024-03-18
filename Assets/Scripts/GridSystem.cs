@@ -83,13 +83,11 @@ public partial struct GridSystem : ISystem
 
 			// get as RW to force job dependency
 			CellArrayComponent cellArray = SystemAPI.GetComponentRW<CellArrayComponent>(entity).ValueRW;
-			ColorArrayComponent colorArray = SystemAPI.GetComponentRW<ColorArrayComponent>(entity).ValueRW;
 
 			state.Dependency = new GridUpdateJob
 			{
 				Read = cellArray.Copy,
 				Write = cellArray.Cells,
-				Colors = colorArray.Colors,
 				Grid = grid,
 			}.ScheduleParallel(length, ForBatchCount, state.Dependency);
 
@@ -115,8 +113,6 @@ public partial struct GridSystem : ISystem
 		public NativeArray<int> Read;
 		[WriteOnly]
 		public NativeArray<int> Write;
-		[WriteOnly]
-		public NativeArray<float4> Colors;
 		public GridComponent Grid;
 
 		public void Execute(int index)
@@ -142,7 +138,6 @@ public partial struct GridSystem : ISystem
 			int state = aliveNeighborCount == 3 || Read[index] + aliveNeighborCount == 3 ? 1 : 0;
 
 			Write[index] = state;
-			Colors[index] = new float4(state, state, state, 1f);
 		}
 	}
 

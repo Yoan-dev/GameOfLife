@@ -10,7 +10,7 @@ public partial struct InstanceRendererComponent : IComponentData
 }
 
 [BurstCompile]
-[UpdateAfter(typeof(BlueprintSystem))]
+[UpdateAfter(typeof(ColorSystem))]
 public partial class InstanceRendererSystem : SystemBase
 {
 	private const int RenderBatchSize = 454;
