@@ -7,6 +7,26 @@ using UnityEngine;
 public struct BlueprintData
 {
     public BlobArray<int2> Cells;
+
+	public int2 GetCell(int index, int orientation)
+	{
+		int2 cellCoordinates = Cells[index];
+
+		if (orientation == 90)
+		{
+			return new int2(cellCoordinates.y, -cellCoordinates.x);
+		}
+		else if (orientation == 180)
+		{
+			return new int2(-cellCoordinates.x, -cellCoordinates.y);
+		}
+		else if (orientation == 270)
+		{
+			return new int2(-cellCoordinates.y, cellCoordinates.x);
+		}
+
+		return cellCoordinates;
+	}
 }
 
 public struct BlueprintCollection : IComponentData
@@ -179,22 +199,7 @@ public partial struct BlueprintSystem : ISystem, ISystemStartStop
 				ref BlueprintData blueprint = ref BlueprintCollection.Collection.Value.Blueprints[blueprintComponent.BlueprintIndex];
 				for (int i = 0; i < blueprint.Cells.Length; i++)
 				{
-					int2 cellCoordinates = blueprint.Cells[i];
-
-					if (blueprintComponent.Orientation == 90)
-					{
-						cellCoordinates = new int2(-cellCoordinates.x, cellCoordinates.y);
-					}
-					else if (blueprintComponent.Orientation == 180)
-					{
-						cellCoordinates = new int2(-cellCoordinates.x, -cellCoordinates.y);
-					}
-					else if (blueprintComponent.Orientation == 270)
-					{
-						cellCoordinates = new int2(cellCoordinates.x, -cellCoordinates.y);
-					}
-
-					int2 coordinates = Grid.AdjustCoordinates(cellCoordinates + Coordinates);
+					int2 coordinates = Grid.AdjustCoordinates(blueprint.GetCell(i, blueprintComponent.Orientation) + Coordinates);
 					int index = Grid.Index(coordinates);
 					Colors[index] = new float4(1f, 0f, 0f, 1f);
 				}
