@@ -51,6 +51,10 @@ MonoBehaviour:
   Blueprints:
   - Name: none
     Cells: []
+  - Name: Point
+    Cells:
+    - x: 0
+      y: 0
   - Name: Glider
     Cells:
     - x: 1
