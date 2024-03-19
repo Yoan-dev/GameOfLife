@@ -10,6 +10,7 @@ public class UIManager : MonoBehaviour
 	public Button ResetButton;
 	public InputField WidthInputField;
 	public InputField HeightInputField;
+	public Slider SpeedSlider;
 
 	private bool _resetPressed;
 
@@ -65,5 +66,10 @@ public class UIManager : MonoBehaviour
 		int res;
 		int.TryParse(field.text, out res);
 		return res;
+	}
+
+	public float GetSpeedRatio()
+	{
+		return SpeedSlider.value;
 	}
 }

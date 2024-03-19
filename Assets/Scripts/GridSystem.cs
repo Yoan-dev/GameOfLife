@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -57,7 +58,8 @@ public partial struct GridInitSystem : ISystem
 public partial struct GridSystem : ISystem
 {
 	private const int ForBatchCount = 32;
-	private const float UpdateTick = 0.1f;
+	private const float UpdateMaxTick = 0.5f;
+	private const float UpdateMinTick = 0.016f;
 
 	private float _time;
 
@@ -69,10 +71,17 @@ public partial struct GridSystem : ISystem
 		state.RequireForUpdate<BlueprintCollectionRef>();
 	}
 
-	[BurstCompile]
+	//[BurstCompile]
 	public void OnUpdate(ref SystemState state)
 	{
 		_time += SystemAPI.Time.DeltaTime;
+
+		float speedRatio = UIManager.Instance.GetSpeedRatio();
+		if (speedRatio == 0f)
+		{
+			return;
+		}
+		float UpdateTick = math.lerp(UpdateMaxTick, UpdateMinTick, speedRatio);
 
 		// custom tick
 		if (_time >= UpdateTick)
