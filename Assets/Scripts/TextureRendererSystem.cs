@@ -44,16 +44,18 @@ public partial class TextureRendererSystem : SystemBase
 		GridComponent grid = SystemAPI.GetSingleton<GridComponent>();
 		if (grid.Width != _cachedWidth || grid.Height != _cachedHeight)
 		{
+			// dimensions changed, re-initialize
 			Initialize(grid);
 		}
 
+		// update referenced texture
 		_gridTexture.SetPixels(SystemAPI.GetSingleton<ColorArrayComponent>().Colors.Reinterpret<Color>().ToArray());
 		_gridTexture.Apply();
 	}
 
 	private void Initialize(GridComponent grid)
 	{
-		Entity entity = SystemAPI.GetSingletonEntity<GridComponent>();
+		// create a texture, assign it to a material and set it to simulation singleton
 
 		_gridTexture = new Texture2D(grid.Width, grid.Height);
 		_gridTexture.filterMode = FilterMode.Point;
@@ -64,6 +66,7 @@ public partial class TextureRendererSystem : SystemBase
 		}
 		_gridMaterial.SetTexture("_Grid", _gridTexture);
 
+		Entity entity = SystemAPI.GetSingletonEntity<GridComponent>();
 		EntitiesGraphicsSystem entitiesGraphics = World.GetExistingSystemManaged<EntitiesGraphicsSystem>();
 		EntityManager.SetComponentData(entity, new MaterialMeshInfo
 		{

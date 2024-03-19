@@ -23,6 +23,8 @@ public class UIManager : MonoBehaviour
 		List<Dropdown.OptionData> options = new List<Dropdown.OptionData>();
 		for (int i = 0; i < ManagedData.Instance.Blueprints.Length; i++)
 		{
+			// dropdown index will correspond to unmanaged data index
+			// (init from same collection)
 			options.Add(new Dropdown.OptionData(ManagedData.Instance.Blueprints[i].Name));
 		}
 		BlueprintDropdown.AddOptions(options);

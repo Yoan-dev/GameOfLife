@@ -23,8 +23,10 @@ public class GridAuthoring : MonoBehaviour
 		{
 			Entity entity = GetEntity(TransformUsageFlags.Dynamic);
 
+			// instance-based rendering allow to space cells
 			float spacing = 1f + (authoring.RenderType == RenderType.Texture ? 0f : authoring.CellSpacing);
 
+			// bounds will be used to calculate mouse coordinates in grid (BlueprintSystem)
 			AddComponent(entity, new GridComponent
 			{
 				Width = authoring.Width,

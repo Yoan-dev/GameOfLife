@@ -59,6 +59,7 @@ public partial class InstanceRendererSystem : SystemBase
 		GridComponent grid = SystemAPI.GetSingleton<GridComponent>();
 		if (grid.Width != _cachedWidth || grid.Height != _cachedHeight)
 		{
+			// dimensions changed, re-initialize
 			if (_matrices.IsCreated)
 			{
 				_matrices.Dispose();
@@ -66,11 +67,15 @@ public partial class InstanceRendererSystem : SystemBase
 			Initialize(grid);
 		}
 
+		// update graphics buffer with computed colors
+		// coloration rest will be done shader-side
+
 		_buffer.SetData(SystemAPI.GetSingleton<ColorArrayComponent>().Colors);
 		_material.SetBuffer("_ColorBuffer", _buffer);
 
 		for (int i = 0; i < _matrices.Length; i += RenderBatchSize)
 		{
+			// specify batch offset so it can be retrieved shader-side
 			_materialPropertyBlock.SetInteger("_InstanceIDOffset", i);
 			Graphics.RenderMeshInstanced(_renderParams, _mesh, 0, _matrices, math.min(_matrices.Length - i, RenderBatchSize), i);
 		}

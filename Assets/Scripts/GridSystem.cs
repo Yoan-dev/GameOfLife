@@ -74,6 +74,7 @@ public partial struct GridSystem : ISystem
 	{
 		_time += SystemAPI.Time.DeltaTime;
 
+		// custom tick
 		if (_time >= UpdateTick)
 		{
 			_time -= UpdateTick;
@@ -82,9 +83,10 @@ public partial struct GridSystem : ISystem
 			GridComponent grid = SystemAPI.GetComponent<GridComponent>(entity);
 			int length = grid.Width * grid.Height;
 
-			// get as RW to force job dependency
+			// get as RW to force dependency (native collection)
 			CellArrayComponent cellArray = SystemAPI.GetComponentRW<CellArrayComponent>(entity).ValueRW;
 
+			// run game of life simulation
 			state.Dependency = new GridUpdateJob
 			{
 				Read = cellArray.Copy,

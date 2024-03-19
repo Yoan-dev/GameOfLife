@@ -23,7 +23,6 @@ public class ManagedData : MonoBehaviour
 
 	public void Awake()
 	{
-		// please don't judge me
 		Instance = this;
 	}
 }

@@ -24,9 +24,11 @@ public partial struct ColorSystem : ISystem
 		Entity entity = SystemAPI.GetSingletonEntity<GridComponent>();
 		GridComponent grid = SystemAPI.GetComponent<GridComponent>(entity);
 
-		// get as RW to force job dependency
+		// get as RW to force dependency (native collection)
 		ColorArrayComponent colorArray = SystemAPI.GetComponentRW<ColorArrayComponent>(entity).ValueRW;
 
+		// prepare color array for rendering
+		
 		state.Dependency = new GetColorsJob
 		{
 			Colors = colorArray.Colors,
@@ -49,7 +51,6 @@ public partial struct ColorSystem : ISystem
 		public NativeArray<int> Cells;
 		[WriteOnly]
 		public NativeArray<float4> Colors;
-		public BlueprintCollectionRef BlueprintCollection;
 		public GridComponent Grid;
 
 		public void Execute(int index)
@@ -68,17 +69,27 @@ public partial struct ColorSystem : ISystem
 		public BlueprintCollectionRef BlueprintCollection;
 		public GridComponent Grid;
 
-		public void Execute(in BlueprintComponent blueprintComponent)
+		public void Execute(in BlueprintController blueprintController, in DynamicBuffer<BlueprintEventBufferElement> blueprintEvents)
 		{
-			if (blueprintComponent.BlueprintIndex != -1)
+			foreach (var blueprintEvent in blueprintEvents)
 			{
-				ref BlueprintData blueprint = ref BlueprintCollection.Collection.Value.Blueprints[blueprintComponent.BlueprintIndex];
-				for (int i = 0; i < blueprint.Cells.Length; i++)
-				{
-					int2 coordinates = Grid.AdjustCoordinates(blueprint.GetCell(i, blueprintComponent.Orientation) + blueprintComponent.Coordinates);
-					int index = Grid.Index(coordinates);
-					Colors[index] = new float4(1f, 0f, 0f, 1f);
-				}
+				Print(blueprintEvent.BlueprintIndex, blueprintEvent.Orientation, blueprintEvent.Coordinates, new float4(1f, 1f, 0f, 1f));
+			}
+
+			if (blueprintController.BlueprintIndex != -1)
+			{
+				Print(blueprintController.BlueprintIndex, blueprintController.Orientation, blueprintController.Coordinates, new float4(1f, 0f, 0f, 1f));
+			}
+		}
+
+		private void Print(int blueprintIndex, int orientation, int2 coordinates, float4 color)
+		{
+			ref BlueprintData blueprint = ref BlueprintCollection.Collection.Value.Blueprints[blueprintIndex];
+
+			for (int i = 0; i < blueprint.Cells.Length; i++)
+			{
+				int2 cellCoordinates = Grid.AdjustCoordinates(blueprint.GetCell(i, orientation) + coordinates);
+				Colors[Grid.Index(cellCoordinates)] = color;
 			}
 		}
 	}

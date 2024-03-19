@@ -39,7 +39,7 @@ public struct BlueprintCollectionRef : IComponentData
 	public BlobAssetReference<BlueprintCollection> Collection;
 }
 
-public partial struct BlueprintComponent : IComponentData
+public partial struct BlueprintController : IComponentData
 {
 	public int BlueprintIndex;
 	public int Orientation;
@@ -63,7 +63,6 @@ public partial struct BlueprintSystem : ISystem, ISystemStartStop
 	public void OnCreate(ref SystemState state)
 	{
 		state.RequireForUpdate<GridComponent>();
-		state.RequireForUpdate<ColorArrayComponent>();
 	}
 
 	[BurstCompile]
@@ -79,6 +78,8 @@ public partial struct BlueprintSystem : ISystem, ISystemStartStop
 	public void OnStartRunning(ref SystemState state)
 	{
 		var builder = new BlobBuilder(Allocator.Temp);
+
+		// create blueprints data from managed data instance
 
 		ref BlueprintCollection blueprintCollection = ref builder.ConstructRoot<BlueprintCollection>();
 
@@ -100,12 +101,14 @@ public partial struct BlueprintSystem : ISystem, ISystemStartStop
 		var blueprintCollectionReference = builder.CreateBlobAssetReference<BlueprintCollection>(Allocator.Persistent);
 		builder.Dispose();
 
+		// add blueprint-related components to simulation singleton
+
 		Entity entity = SystemAPI.GetSingletonEntity<GridComponent>();
 		state.EntityManager.AddComponentData(entity, new BlueprintCollectionRef
 		{
 			Collection = blueprintCollectionReference,
 		});
-		state.EntityManager.AddComponentData(entity, new BlueprintComponent
+		state.EntityManager.AddComponentData(entity, new BlueprintController
 		{
 			BlueprintIndex = 0,
 		});
@@ -122,6 +125,7 @@ public partial struct BlueprintSystem : ISystem, ISystemStartStop
 	{
 		GridComponent grid = SystemAPI.GetSingleton<GridComponent>();
 
+		// mouse position to position on grid
 		Vector3 worldMousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 		int2 mouseCoordinates = new int2(
 			(int)((worldMousePos.x - grid.MinBounds.x) / (grid.MaxBounds.x - grid.MinBounds.x) * grid.Width),
@@ -142,6 +146,8 @@ public partial struct BlueprintSystem : ISystem, ISystemStartStop
 
 		if (isMouseOnGrid && Input.GetMouseButtonDown(0))
 		{
+			// create a blueprint event
+			// will be printed during simulation (GridSystem)
 			state.Dependency = new AddBlueprintEventJob().Schedule(state.Dependency);
 		}
 	}
@@ -153,14 +159,14 @@ public partial struct BlueprintSystem : ISystem, ISystemStartStop
 		public bool PressedRotateInput;
 		public int2 Coordinates;
 
-		public void Execute(ref BlueprintComponent blueprintComponent)
+		public void Execute(ref BlueprintController blueprintController)
 		{
-			blueprintComponent.BlueprintIndex = Index;
-			blueprintComponent.Coordinates = Coordinates;
+			blueprintController.BlueprintIndex = Index;
+			blueprintController.Coordinates = Coordinates;
 
 			if (PressedRotateInput)
 			{
-				blueprintComponent.Orientation = (blueprintComponent.Orientation + 90) % 360;
+				blueprintController.Orientation = (blueprintController.Orientation + 90) % 360;
 			}
 		}
 	}
@@ -168,15 +174,15 @@ public partial struct BlueprintSystem : ISystem, ISystemStartStop
 	[BurstCompile]
 	public partial struct AddBlueprintEventJob : IJobEntity
 	{
-		public void Execute(in BlueprintComponent blueprintComponent, ref DynamicBuffer<BlueprintEventBufferElement> blueprintEvents)
+		public void Execute(in BlueprintController blueprintController, ref DynamicBuffer<BlueprintEventBufferElement> blueprintEvents)
 		{
-			if (blueprintComponent.BlueprintIndex != -1)
+			if (blueprintController.BlueprintIndex != -1)
 			{
 				blueprintEvents.Add(new BlueprintEventBufferElement
 				{
-					BlueprintIndex = blueprintComponent.BlueprintIndex,
-					Orientation = blueprintComponent.Orientation,
-					Coordinates = blueprintComponent.Coordinates,
+					BlueprintIndex = blueprintController.BlueprintIndex,
+					Orientation = blueprintController.Orientation,
+					Coordinates = blueprintController.Coordinates,
 				});
 			}
 		}
