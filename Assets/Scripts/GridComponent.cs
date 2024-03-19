@@ -24,6 +24,10 @@ public partial struct GridComponent : IComponentData
 	}
 }
 
+public partial struct GridInitComponent : IComponentData
+{
+}
+
 public partial struct CellArrayComponent : IComponentData
 {
 	public NativeArray<int> Cells;

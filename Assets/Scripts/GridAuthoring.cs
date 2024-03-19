@@ -32,6 +32,7 @@ public class GridAuthoring : MonoBehaviour
 				MaxBounds = new float2(authoring.Width * spacing / 2f, authoring.Height * spacing / 2f),
 				MinBounds = new float2(-authoring.Width * spacing / 2f, -authoring.Height * spacing / 2f),
 			});
+			AddComponent(entity, new GridInitComponent());
 
 			if (authoring.RenderType == RenderType.Texture)
 			{

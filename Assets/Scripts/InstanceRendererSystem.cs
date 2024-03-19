@@ -21,6 +21,8 @@ public partial class InstanceRendererSystem : SystemBase
 	private GraphicsBuffer _buffer;
 	private MaterialPropertyBlock _materialPropertyBlock;
 	private RenderParams _renderParams;
+	private int _cachedWidth;
+	private int _cachedHeight;
 
 	[BurstCompile]
 	protected override void OnCreate()
@@ -45,28 +47,7 @@ public partial class InstanceRendererSystem : SystemBase
 		if (!_matrices.IsCreated)
 		{
 			Dependency.Complete();
-
-			GridComponent grid = SystemAPI.GetSingleton<GridComponent>();
-
-			int length = grid.Width * grid.Height;
-			_matrices = new NativeArray<Matrix4x4>(length, Allocator.Persistent);
-
-			float spacing = 1f + SystemAPI.GetSingleton<InstanceRendererComponent>().CellSpacing;
-			float xOffset = grid.Width * spacing / 2f;
-			float yOffset = grid.Height * spacing / 2f;
-
-			for (int i = 0; i < length; i++)
-			{
-				int x = i % grid.Width;
-				int y = i / grid.Width;
-				_matrices[i] = Matrix4x4.TRS(new Vector3(x * spacing - xOffset, y * spacing - yOffset, 0f), quaternion.identity, Vector3.one);
-			}
-
-			_mesh = ManagedData.Instance.QuadMesh;
-			_material = ManagedData.Instance.InstanceMaterial;
-			_buffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, length, sizeof(float) * 4);
-			_materialPropertyBlock = new MaterialPropertyBlock();
-			_renderParams = new RenderParams(_material) { matProps = _materialPropertyBlock };
+			Initialize(SystemAPI.GetSingleton<GridComponent>());
 		}
 	}
 
@@ -74,6 +55,16 @@ public partial class InstanceRendererSystem : SystemBase
 	protected override void OnUpdate()
 	{
 		Dependency.Complete();
+
+		GridComponent grid = SystemAPI.GetSingleton<GridComponent>();
+		if (grid.Width != _cachedWidth || grid.Height != _cachedHeight)
+		{
+			if (_matrices.IsCreated)
+			{
+				_matrices.Dispose();
+			}
+			Initialize(grid);
+		}
 
 		_buffer.SetData(SystemAPI.GetSingleton<ColorArrayComponent>().Colors);
 		_material.SetBuffer("_ColorBuffer", _buffer);
@@ -83,5 +74,32 @@ public partial class InstanceRendererSystem : SystemBase
 			_materialPropertyBlock.SetInteger("_InstanceIDOffset", i);
 			Graphics.RenderMeshInstanced(_renderParams, _mesh, 0, _matrices, math.min(_matrices.Length - i, RenderBatchSize), i);
 		}
+	}
+
+	private void Initialize(GridComponent grid)
+	{
+		int length = grid.Width * grid.Height;
+		_matrices = new NativeArray<Matrix4x4>(length, Allocator.Persistent);
+
+		float spacing = 1f + SystemAPI.GetSingleton<InstanceRendererComponent>().CellSpacing;
+		float xOffset = grid.Width * spacing / 2f;
+		float yOffset = grid.Height * spacing / 2f;
+
+		for (int i = 0; i < length; i++)
+		{
+			int x = i % grid.Width;
+			int y = i / grid.Width;
+			_matrices[i] = Matrix4x4.TRS(new Vector3(x * spacing - xOffset, y * spacing - yOffset, 0f), quaternion.identity, Vector3.one);
+		}
+
+		_mesh = ManagedData.Instance.QuadMesh;
+		_material = ManagedData.Instance.InstanceMaterial;
+		_buffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, length, sizeof(float) * 4);
+		_materialPropertyBlock = new MaterialPropertyBlock();
+		_renderParams = new RenderParams(_material) { matProps = _materialPropertyBlock };
+
+		// to detect changes
+		_cachedWidth = grid.Width;
+		_cachedHeight = grid.Height;
 	}
 }

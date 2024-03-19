@@ -14,6 +14,7 @@ public partial struct GridInitSystem : ISystem
 	public void OnCreate(ref SystemState state)
 	{
 		state.RequireForUpdate<GridComponent>();
+		state.RequireForUpdate<GridInitComponent>();
 	}
 
 	[BurstCompile]
@@ -30,25 +31,25 @@ public partial struct GridInitSystem : ISystem
 	[BurstCompile]
 	public void OnUpdate(ref SystemState state)
 	{
-		Entity gridEntity = SystemAPI.GetSingletonEntity<GridComponent>();
-		GridComponent grid = SystemAPI.GetComponent<GridComponent>(gridEntity);
+		Entity entity = SystemAPI.GetSingletonEntity<GridComponent>();
+		GridComponent grid = SystemAPI.GetComponent<GridComponent>(entity);
 
 		int length = grid.Width * grid.Height;
 		_cells = new NativeArray<int>(length, Allocator.Persistent);
 		_copy = new NativeArray<int>(length, Allocator.Persistent);
 		_colors = new NativeArray<float4>(length, Allocator.Persistent);
 
-		state.EntityManager.AddComponentData(gridEntity, new CellArrayComponent
+		state.EntityManager.AddComponentData(entity, new CellArrayComponent
 		{
 			Cells = _cells,
 			Copy = _copy,
 		});
-		state.EntityManager.AddComponentData(gridEntity, new ColorArrayComponent
+		state.EntityManager.AddComponentData(entity, new ColorArrayComponent
 		{
 			Colors = _colors,
 		});
-		
-		state.Enabled = false;
+
+		state.EntityManager.RemoveComponent<GridInitComponent>(entity);
 	}
 }
 
@@ -175,6 +176,58 @@ public partial struct GridSystem : ISystem
 		public void Execute(int index)
 		{
 			Write[index] = Read[index];
+		}
+	}
+}
+
+[UpdateBefore(typeof(GridInitSystem))]
+public partial struct GridResetSystem : ISystem
+{
+	[BurstCompile]
+	public void OnCreate(ref SystemState state)
+	{
+		state.RequireForUpdate<GridComponent>();
+		state.RequireForUpdate<CellArrayComponent>();
+		state.RequireForUpdate<ColorArrayComponent>();
+	}
+
+	[BurstCompile]
+	public void OnDestroy(ref SystemState state)
+	{
+	}
+
+	//[BurstCompile]
+	public void OnUpdate(ref SystemState state)
+	{
+		if (UIManager.Instance.HasResetBeenPressed())
+		{
+			state.Dependency.Complete();
+
+			Entity entity = SystemAPI.GetSingletonEntity<GridComponent>();
+
+			CellArrayComponent cellArray = SystemAPI.GetComponentRW<CellArrayComponent>(entity).ValueRW;
+			ColorArrayComponent colorArray = SystemAPI.GetComponentRW<ColorArrayComponent>(entity).ValueRW;
+			cellArray.Cells.Dispose();
+			cellArray.Copy.Dispose();
+			colorArray.Colors.Dispose();
+
+			int newWidth = UIManager.Instance.GetWidthInput();
+			int newHeight = UIManager.Instance.GetHeightInput();
+
+			float spacing = 1f;
+			if (state.EntityManager.HasComponent<InstanceRendererComponent>(entity))
+			{
+				spacing += state.EntityManager.GetComponentData<InstanceRendererComponent>(entity).CellSpacing;
+			}
+
+			state.EntityManager.SetComponentData(entity, new GridComponent
+			{
+				Width = newWidth,
+				Height = newHeight,
+				MaxBounds = new float2(newWidth * spacing / 2f, newHeight * spacing / 2f),
+				MinBounds = new float2(-newWidth * spacing / 2f, -newHeight * spacing / 2f),
+			});
+			state.EntityManager.AddComponent<GridInitComponent>(entity);
 		}
 	}
 }

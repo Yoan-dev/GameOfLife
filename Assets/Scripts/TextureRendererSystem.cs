@@ -14,6 +14,9 @@ public partial struct TextureRendererComponent : IComponentData
 public partial class TextureRendererSystem : SystemBase
 {
 	private Texture2D _gridTexture;
+	private Material _gridMaterial;
+	private int _cachedWidth;
+	private int _cachedHeight;
 
 	[BurstCompile]
 	protected override void OnCreate()
@@ -29,26 +32,7 @@ public partial class TextureRendererSystem : SystemBase
 		if (_gridTexture == null)
 		{
 			Dependency.Complete();
-
-			Entity entity = SystemAPI.GetSingletonEntity<GridComponent>();
-			GridComponent grid = SystemAPI.GetComponent<GridComponent>(entity);
-
-			_gridTexture = new Texture2D(grid.Width, grid.Height);
-			_gridTexture.filterMode = FilterMode.Point;
-
-			Material gridMaterial = new Material(ManagedData.Instance.GridShader);
-			gridMaterial.SetTexture("_Grid", _gridTexture);
-
-			EntitiesGraphicsSystem entitiesGraphics = World.GetExistingSystemManaged<EntitiesGraphicsSystem>();
-			EntityManager.SetComponentData(entity, new MaterialMeshInfo
-			{
-				MeshID = entitiesGraphics.RegisterMesh(ManagedData.Instance.QuadMesh),
-				MaterialID = entitiesGraphics.RegisterMaterial(gridMaterial),
-			});
-			EntityManager.SetComponentData(entity, new LocalToWorld
-			{
-				Value = float4x4.TRS(float3.zero, quaternion.identity, new float3(grid.Width, grid.Height, 1f)),
-			});
+			Initialize(SystemAPI.GetSingleton<GridComponent>());
 		}
 	}
 
@@ -57,7 +41,42 @@ public partial class TextureRendererSystem : SystemBase
 	{
 		Dependency.Complete();
 
+		GridComponent grid = SystemAPI.GetSingleton<GridComponent>();
+		if (grid.Width != _cachedWidth || grid.Height != _cachedHeight)
+		{
+			Initialize(grid);
+		}
+
 		_gridTexture.SetPixels(SystemAPI.GetSingleton<ColorArrayComponent>().Colors.Reinterpret<Color>().ToArray());
 		_gridTexture.Apply();
+	}
+
+	private void Initialize(GridComponent grid)
+	{
+		Entity entity = SystemAPI.GetSingletonEntity<GridComponent>();
+
+		_gridTexture = new Texture2D(grid.Width, grid.Height);
+		_gridTexture.filterMode = FilterMode.Point;
+
+		if (_gridMaterial == null)
+		{
+			_gridMaterial = new Material(ManagedData.Instance.GridShader);
+		}
+		_gridMaterial.SetTexture("_Grid", _gridTexture);
+
+		EntitiesGraphicsSystem entitiesGraphics = World.GetExistingSystemManaged<EntitiesGraphicsSystem>();
+		EntityManager.SetComponentData(entity, new MaterialMeshInfo
+		{
+			MeshID = entitiesGraphics.RegisterMesh(ManagedData.Instance.QuadMesh),
+			MaterialID = entitiesGraphics.RegisterMaterial(_gridMaterial),
+		});
+		EntityManager.SetComponentData(entity, new LocalToWorld
+		{
+			Value = float4x4.TRS(float3.zero, quaternion.identity, new float3(grid.Width, grid.Height, 1f)),
+		});
+
+		// to detect changes
+		_cachedWidth = grid.Width;
+		_cachedHeight = grid.Height;
 	}
 }
