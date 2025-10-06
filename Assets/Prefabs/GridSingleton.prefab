@@ -49,6 +49,7 @@ MonoBehaviour:
   RenderType: 1
   Width: 512
   Height: 512
+  HasNoise: 1
   CellSpacing: 0.1
 --- !u!33 &3817996860607997934
 MeshFilter:

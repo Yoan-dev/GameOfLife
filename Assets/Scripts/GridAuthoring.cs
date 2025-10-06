@@ -15,6 +15,7 @@ public class GridAuthoring : MonoBehaviour
 	public RenderType RenderType;
 	public int Width;
 	public int Height;
+	public bool HasNoise;
 	public float CellSpacing;
 
 	public class Baker : Baker<GridAuthoring>
@@ -34,7 +35,7 @@ public class GridAuthoring : MonoBehaviour
 				MaxBounds = new float2(authoring.Width * spacing / 2f, authoring.Height * spacing / 2f),
 				MinBounds = new float2(-authoring.Width * spacing / 2f, -authoring.Height * spacing / 2f),
 			});
-			AddComponent(entity, new GridInitComponent());
+			AddComponent(entity, new GridInitComponent { HasNoise = authoring.HasNoise });
 
 			if (authoring.RenderType == RenderType.Texture)
 			{

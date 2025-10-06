@@ -26,6 +26,7 @@ public partial struct GridComponent : IComponentData
 
 public partial struct GridInitComponent : IComponentData
 {
+	public bool HasNoise;
 }
 
 public partial struct CellArrayComponent : IComponentData

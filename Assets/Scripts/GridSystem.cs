@@ -34,11 +34,21 @@ public partial struct GridInitSystem : ISystem
 	{
 		Entity entity = SystemAPI.GetSingletonEntity<GridComponent>();
 		GridComponent grid = SystemAPI.GetComponent<GridComponent>(entity);
+		bool hasNoise = SystemAPI.GetComponent<GridInitComponent>(entity).HasNoise;
 
 		int length = grid.Width * grid.Height;
 		_cells = new NativeArray<int>(length, Allocator.Persistent);
 		_copy = new NativeArray<int>(length, Allocator.Persistent);
 		_colors = new NativeArray<float4>(length, Allocator.Persistent);
+
+		if (hasNoise)
+		{
+			Random random = new Random(math.max(1, (uint)SystemAPI.Time.ElapsedTime));
+			for (int i = 0; i < length; i++)
+			{
+				_cells[i] = _copy[i] = random.NextInt(2);
+			}
+		}
 
 		state.EntityManager.AddComponentData(entity, new CellArrayComponent
 		{
@@ -224,6 +234,7 @@ public partial struct GridResetSystem : ISystem
 
 			int newWidth = UIManager.Instance.GetWidthInput();
 			int newHeight = UIManager.Instance.GetHeightInput();
+			bool hasNoise = UIManager.Instance.GetNoiseInput();
 
 			float spacing = 1f;
 			if (state.EntityManager.HasComponent<InstanceRendererComponent>(entity))
@@ -238,7 +249,7 @@ public partial struct GridResetSystem : ISystem
 				MaxBounds = new float2(newWidth * spacing / 2f, newHeight * spacing / 2f),
 				MinBounds = new float2(-newWidth * spacing / 2f, -newHeight * spacing / 2f),
 			});
-			state.EntityManager.AddComponent<GridInitComponent>(entity);
+			state.EntityManager.AddComponentData(entity, new GridInitComponent { HasNoise = hasNoise });
 		}
 	}
 }

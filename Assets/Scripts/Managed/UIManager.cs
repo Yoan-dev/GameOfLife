@@ -11,6 +11,10 @@ public class UIManager : MonoBehaviour
 	public InputField WidthInputField;
 	public InputField HeightInputField;
 	public Slider SpeedSlider;
+	public Toggle NoiseToggle;
+	public Toggle PerformanceToggle;
+
+	public GameObject GraphyGameObject;
 
 	private bool _resetPressed;
 
@@ -31,6 +35,8 @@ public class UIManager : MonoBehaviour
 		BlueprintDropdown.AddOptions(options);
 
 		ResetButton.onClick.AddListener(() => { _resetPressed = true; });
+		PerformanceToggle.onValueChanged.AddListener((bool value) => { GraphyGameObject.SetActive(value); });
+		GraphyGameObject.SetActive(PerformanceToggle.isOn);
 	}
 
 	public int GetBlueprintIndex()
@@ -59,6 +65,11 @@ public class UIManager : MonoBehaviour
 	public int GetHeightInput()
 	{
 		return GetIntInput(HeightInputField);
+	}
+
+	public bool GetNoiseInput()
+	{
+		return NoiseToggle.isOn;
 	}
 
 	private int GetIntInput(InputField field)
